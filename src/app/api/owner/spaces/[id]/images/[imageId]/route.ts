@@ -92,6 +92,7 @@ export async function DELETE(
     if (fullVenue) {
       const score = calculateCompleteness({
         ...fullVenue,
+        pricePerHour: fullVenue.pricePerHour ? Number(fullVenue.pricePerHour) : undefined,
         images: remaining,
       });
       await db.venue.update({
