@@ -10,10 +10,10 @@ import { Plus } from "lucide-react";
 import { startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 async function getOwnerStats(ownerId: string) {
-  const now = new Date();
-  const monthStart = startOfMonth(now);
+  const now            = new Date();
+  const monthStart     = startOfMonth(now);
   const lastMonthStart = startOfMonth(subMonths(now, 1));
-  const lastMonthEnd = endOfMonth(subMonths(now, 1));
+  const lastMonthEnd   = endOfMonth(subMonths(now, 1));
 
   const [
     totalVenues,
@@ -34,21 +34,21 @@ async function getOwnerStats(ownerId: string) {
     db.booking.count({
       where: {
         venue: { ownerId },
-        status: { in: ["CONFIRMED", "COMPLETED"] },
+        status:    { in: ["CONFIRMED", "COMPLETED"] },
         createdAt: { gte: monthStart },
       },
     }),
     db.booking.count({
       where: {
         venue: { ownerId },
-        status: { in: ["CONFIRMED", "COMPLETED"] },
+        status:    { in: ["CONFIRMED", "COMPLETED"] },
         createdAt: { gte: lastMonthStart, lte: lastMonthEnd },
       },
     }),
     db.booking.aggregate({
       where: {
         venue: { ownerId },
-        status: { in: ["CONFIRMED", "COMPLETED"] },
+        status:    { in: ["CONFIRMED", "COMPLETED"] },
         createdAt: { gte: monthStart },
       },
       _sum: { total: true },
@@ -56,45 +56,45 @@ async function getOwnerStats(ownerId: string) {
     db.booking.aggregate({
       where: {
         venue: { ownerId },
-        status: { in: ["CONFIRMED", "COMPLETED"] },
+        status:    { in: ["CONFIRMED", "COMPLETED"] },
         createdAt: { gte: lastMonthStart, lte: lastMonthEnd },
       },
       _sum: { total: true },
     }),
     db.booking.findMany({
-      where: { venue: { ownerId } },
+      where:   { venue: { ownerId } },
       include: {
-        tenant: { select: { name: true, email: true, image: true } },
-        venue: { select: { title: true } },
+        tenant:  { select: { name: true, email: true, image: true } },
+        venue:   { select: { title: true } },
         payment: { select: { status: true } },
       },
       orderBy: { createdAt: "desc" },
-      take: 8,
+      take:    8,
     }),
     db.booking.findMany({
       where: {
-        venue: { ownerId },
+        venue:  { ownerId },
         status: "CONFIRMED",
-        date: { gte: now },
+        date:   { gte: now },
       },
       include: {
         tenant: { select: { name: true, image: true } },
-        venue: { select: { title: true } },
+        venue:  { select: { title: true } },
       },
       orderBy: { date: "asc" },
-      take: 5,
+      take:    5,
     }),
   ]);
 
-  const monthRevenue = Number(revenueResult._sum.total ?? 0);
-  const lastMonthRevenue = Number(lastMonthRevenueResult._sum.total ?? 0);
+  const monthRevenue     = Number(revenueResult._sum.total          ?? 0);
+  const lastMonthRevenue = Number(lastMonthRevenueResult._sum.total  ?? 0);
 
-  // Convert Prisma Decimal fields to number so RecentBookingsTable types match
+  // Prisma returns Decimal objects — convert to number for component types
   const recentBookingsNormalized = recentBookings.map((b) => ({
     ...b,
-    total:      Number(b.total),
-    subtotal:   Number(b.subtotal),
-    platformFee:Number(b.platformFee),
+    total:       Number(b.total),
+    subtotal:    Number(b.subtotal),
+    platformFee: Number(b.platformFee),
   }));
 
   return {
@@ -105,7 +105,7 @@ async function getOwnerStats(ownerId: string) {
     lastMonthBookings,
     monthRevenue,
     lastMonthRevenue,
-    recentBookings,
+    recentBookings: recentBookingsNormalized,  // normalized
     upcomingBookings,
   };
 }
@@ -118,37 +118,35 @@ export default async function OwnerDashboard() {
 
   const kpis = [
     {
-      label: "Ingresos este mes",
-      value: stats.monthRevenue,
-      type: "currency" as const,
-      change:
-        stats.lastMonthRevenue > 0
-          ? ((stats.monthRevenue - stats.lastMonthRevenue) / stats.lastMonthRevenue) * 100
-          : null,
+      label:  "Ingresos este mes",
+      value:  stats.monthRevenue,
+      type:   "currency" as const,
+      change: stats.lastMonthRevenue > 0
+        ? ((stats.monthRevenue - stats.lastMonthRevenue) / stats.lastMonthRevenue) * 100
+        : null,
       icon: "euro" as const,
     },
     {
-      label: "Reservas este mes",
-      value: stats.monthBookings,
-      type: "number" as const,
-      change:
-        stats.lastMonthBookings > 0
-          ? ((stats.monthBookings - stats.lastMonthBookings) / stats.lastMonthBookings) * 100
-          : null,
+      label:  "Reservas este mes",
+      value:  stats.monthBookings,
+      type:   "number" as const,
+      change: stats.lastMonthBookings > 0
+        ? ((stats.monthBookings - stats.lastMonthBookings) / stats.lastMonthBookings) * 100
+        : null,
       icon: "calendar" as const,
     },
     {
       label: "Espacios activos",
       value: stats.activeVenues,
       total: stats.totalVenues,
-      type: "number" as const,
-      icon: "building" as const,
+      type:  "number" as const,
+      icon:  "building" as const,
     },
     {
       label: "Reservas totales",
       value: stats.totalBookings,
-      type: "number" as const,
-      icon: "check" as const,
+      type:  "number" as const,
+      icon:  "check" as const,
     },
   ];
 
@@ -193,7 +191,7 @@ export default async function OwnerDashboard() {
             <Link href="/owner/bookings">Ver todas</Link>
           </Button>
         </div>
-        <RecentBookingsTable bookings={recentBookingsNormalized} role="owner" />
+        <RecentBookingsTable bookings={stats.recentBookings} role="owner" />
       </div>
     </div>
   );
@@ -218,16 +216,11 @@ function UpcomingBookings({ bookings }: { bookings: any[] }) {
                 {b.tenant?.name?.charAt(0) ?? "?"}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium truncate">
-                  {b.tenant?.name}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {b.venue?.title}
-                </p>
+                <p className="text-sm font-medium truncate">{b.tenant?.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{b.venue?.title}</p>
                 <p className="text-xs text-muted-foreground">
                   {new Date(b.date).toLocaleDateString("es-ES", {
-                    day: "numeric",
-                    month: "short",
+                    day: "numeric", month: "short",
                   })}{" "}
                   · {b.startTime}–{b.endTime}
                 </p>
