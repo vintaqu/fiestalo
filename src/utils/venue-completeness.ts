@@ -3,15 +3,16 @@ interface VenueData {
   description?: string;
   images?: unknown[];
   amenityIds?: string[];
-  pricePerHour?: number;
-  capacity?: number;
-  address?: string;
-  latitude?: number;
-  longitude?: number;
-  categoryId?: string;
+  // Accept number | Prisma.Decimal | string — all coerced via Number() in checks
+  pricePerHour?: number | { toNumber(): number } | string | null;
+  capacity?: number | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  categoryId?: string | null;
   cancellationPolicy?: unknown;
-  houseRules?: string;
-  shortDescription?: string;
+  houseRules?: string | null;
+  shortDescription?: string | null;
 }
 
 const WEIGHTS: Array<{ key: keyof VenueData; weight: number; check?: (v: unknown) => boolean }> = [
