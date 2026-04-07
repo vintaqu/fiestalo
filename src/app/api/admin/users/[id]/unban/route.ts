@@ -6,7 +6,7 @@ export const POST = withAdmin(async (_req: NextRequest, { params }) => {
   const userId = params!.id as string;
   await db.user.update({
     where: { id: userId },
-    data:  { isBanned: "unban" === "ban", isActive: "unban" !== "ban" },
+    data:  { isBanned: false, isActive: true },
   });
   return NextResponse.json({ success: true });
 });
