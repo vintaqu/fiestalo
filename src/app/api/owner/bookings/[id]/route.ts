@@ -21,7 +21,7 @@ export async function POST(
   const booking = await db.booking.findUnique({
     where: { id: params.id },
     include: {
-      venue:   { select: { ownerId: true, title: true, bookingType: true } },
+      venue:   { select: { ownerId: true, title: true, bookingType: true, owner: { select: { name: true } } } },
       tenant:  { select: { id: true, email: true, name: true } },
       payment: { select: { stripePaymentIntentId: true, status: true } },
     },
