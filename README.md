@@ -1,6 +1,39 @@
-# SpaceHub 🏢
+# Fiestalo 🎉
 
-Marketplace de alquiler de espacios por horas. Inspirado en Peerspace / Airbnb, construido con Next.js 14, Prisma, PostgreSQL y Stripe.
+**Marketplace de salas de fiestas infantiles y celebraciones en España.**
+
+Plataforma completa tipo Airbnb/Peerspace especializada en salas de fiestas, salones de celebraciones y espacios temáticos. Reserva por horas o paquetes de tiempo, con gestión completa para propietarios, clientes y administradores.
+
+> Construido con Next.js 14 App Router, Prisma, PostgreSQL, Stripe, Mapbox y Resend.
+
+---
+
+## Estado del proyecto
+
+| Módulo | Estado |
+|--------|--------|
+| Autenticación (email + Google OAuth) | ✅ Completo |
+| Publicación y gestión de espacios | ✅ Completo |
+| Buscador avanzado con mapa | ✅ Completo |
+| Sistema de reservas y disponibilidad | ✅ Completo |
+| Pagos con Stripe + webhooks | ✅ Completo |
+| Sistema de reseñas con moderación | ✅ Completo |
+| Mensajería entre usuarios | ✅ Completo |
+| Notificaciones in-app (25 tipos) | ✅ Completo |
+| Emails transaccionales (Resend) | ✅ Completo |
+| Panel admin con analítica | ✅ Completo |
+| Panel propietario | ✅ Completo |
+| Panel cliente | ✅ Completo |
+| Edición de perfil con foto | ✅ Completo |
+| Favoritos | ✅ Completo |
+| Páginas legales (RGPD/LOPDGDD) | ✅ Completo |
+| Recuperación de contraseña | ⏳ Pendiente DNS producción |
+| Calendario visual propietario | 🔲 Por implementar |
+| Analytics propietario | 🔲 Por implementar |
+| Facturación/billing propietario | 🔲 Por implementar |
+| Payouts automáticos (Stripe Connect) | 🔲 Futuro |
+
+**30 páginas · 46 API routes · 62 componentes · 7 servicios · 32 modelos Prisma**
 
 ---
 
@@ -8,27 +41,28 @@ Marketplace de alquiler de espacios por horas. Inspirado en Peerspace / Airbnb, 
 
 | Capa | Tecnología |
 |------|-----------|
-| Frontend | Next.js 14 (App Router), React, TypeScript, Tailwind CSS |
-| UI Components | shadcn/ui, Framer Motion, Lucide |
-| Backend | Next.js API Routes, TypeScript |
-| ORM | Prisma |
+| Framework | Next.js 14 (App Router), React 18, TypeScript |
+| Estilos | Tailwind CSS, shadcn/ui, Framer Motion |
+| ORM | Prisma 5 |
 | Base de datos | PostgreSQL |
-| Autenticación | Auth.js v5 (NextAuth) |
-| Pagos | Stripe |
-| Mapas | Mapbox GL |
-| Imágenes | Cloudinary |
-| Email | Resend |
+| Autenticación | Auth.js v5 (NextAuth beta) — email + Google OAuth |
+| Pagos | Stripe (PaymentIntents, Webhooks, Refunds) |
+| Mapas | Mapbox GL v2.15.0 |
+| Imágenes | Cloudinary (uploads firmados en servidor) |
+| Email | Resend + React Email |
 | Validación | Zod |
-| Estado cliente | TanStack Query, Zustand |
+| Charts | Recharts |
+| Geocodificación | Mapbox Geocoding API |
+| Fetching cliente | TanStack Query v5 |
 
 ---
 
-## Instalación y configuración
+## Instalación
 
-### 1. Clonar y preparar
+### 1. Clonar el repositorio
 
 ```bash
-git clone <repo>
+git clone <repo-url>
 cd spacehub
 npm install
 ```
@@ -39,54 +73,57 @@ npm install
 cp .env.example .env.local
 ```
 
-Edita `.env.local` con tus credenciales reales. Las mínimas para arrancar en local:
+Edita `.env.local`:
 
 ```env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/spacehub"
-NEXTAUTH_SECRET="genera-con-openssl-rand-base64-32"
-NEXTAUTH_URL="http://localhost:3000"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
+# Base de datos
+DATABASE_URL="postgresql://postgres:password@localhost:5432/fiestalo"
 
-# Stripe (test keys)
+# Auth.js
+NEXTAUTH_SECRET="genera-con: openssl rand -base64 32"
+NEXTAUTH_URL="http://localhost:3000"
+
+# App
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_NAME="Fiestalo"
+
+# Stripe — usar claves de TEST en desarrollo
 STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_PUBLISHABLE_KEY="pk_test_..."
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
 
 # Mapbox
 NEXT_PUBLIC_MAPBOX_TOKEN="pk.eyJ1..."
 
 # Cloudinary
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="..."
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="tu-cloud-name"
 CLOUDINARY_API_KEY="..."
 CLOUDINARY_API_SECRET="..."
 
 # Resend (opcional en desarrollo)
 RESEND_API_KEY="re_..."
+RESEND_FORCE_SEND="true"
+
+# Google OAuth (opcional en desarrollo)
+GOOGLE_CLIENT_ID="..."
+GOOGLE_CLIENT_SECRET="..."
 ```
 
-### 3. Base de datos
+### 3. Base de datos y seed
 
 ```bash
-# Crear la base de datos PostgreSQL
-createdb spacehub
-
-# Generar el cliente Prisma
-npm run db:generate
-
-# Aplicar migraciones
+createdb fiestalo
 npm run db:migrate
-
-# Cargar datos de ejemplo
+npm run db:generate
 npm run db:seed
 ```
 
-### 4. Arrancar el servidor
+### 4. Arrancar
 
 ```bash
 npm run dev
+# → http://localhost:3000
 ```
-
-Abre [http://localhost:3000](http://localhost:3000)
 
 ---
 
@@ -94,9 +131,10 @@ Abre [http://localhost:3000](http://localhost:3000)
 
 | Rol | Email | Contraseña |
 |-----|-------|-----------|
-| Admin | admin@spacehub.app | Password123! |
-| Propietario | propietario1@demo.com | Password123! |
-| Cliente | cliente@demo.com | Password123! |
+| Administrador | `admin@fiestalo.es` | `Password123!` |
+| Propietario 1 | `propietario1@demo.com` | `Password123!` |
+| Propietario 2 | `propietario2@demo.com` | `Password123!` |
+| Cliente | `cliente@demo.com` | `Password123!` |
 
 ---
 
@@ -105,173 +143,202 @@ Abre [http://localhost:3000](http://localhost:3000)
 ```
 spacehub/
 ├── prisma/
-│   ├── schema.prisma          # Modelo de datos completo
-│   └── seed.ts                # Datos de ejemplo
+│   ├── schema.prisma          # 32 modelos, 11 enums
+│   ├── seed.ts                # Categorías, amenities, venues y usuarios demo
+│   └── migrations/
+│
 ├── src/
 │   ├── app/
-│   │   ├── (auth)/            # Login, Register
-│   │   ├── (public)/          # Home, Search, Venue detail, Checkout
+│   │   ├── (auth)/            # /login  /register  /onboarding
+│   │   ├── (public)/          # /  /search  /venues/[id]  /checkout  /terms  /privacy
 │   │   ├── (dashboard)/
-│   │   │   ├── admin/         # Panel administrador
-│   │   │   ├── owner/         # Panel propietario
-│   │   │   └── tenant/        # Panel cliente
-│   │   └── api/               # API Routes
-│   │       ├── auth/
-│   │       ├── venues/
-│   │       ├── bookings/
-│   │       ├── availability/
-│   │       ├── checkout/
-│   │       ├── webhooks/stripe/
-│   │       ├── reviews/
-│   │       ├── favorites/
-│   │       ├── notifications/
-│   │       ├── admin/
-│   │       └── owner/
+│   │   │   ├── admin/         # Dashboard analítico, venues, users, bookings, payments, reviews
+│   │   │   ├── owner/         # Dashboard, spaces, bookings, reviews
+│   │   │   └── tenant/        # Dashboard, bookings, favorites, reviews
+│   │   └── api/               # 46 endpoints REST
+│   │       ├── admin/         # analytics, moderación venues, ban/unban users
+│   │       ├── auth/          # nextauth, register, onboarding
+│   │       ├── bookings/      # create, cancel, refund
+│   │       ├── checkout/      # Stripe PaymentIntent
+│   │       ├── cloudinary/    # signed uploads (venues + avatars)
+│   │       ├── conversations/ # mensajería, mensajes, unread count
+│   │       ├── favorites/     # toggle favoritos
+│   │       ├── geocode/       # Mapbox geocoding proxy
+│   │       ├── notifications/ # CRUD + clear all
+│   │       ├── owner/         # spaces, bookings, availability, blocks, metrics
+│   │       ├── reviews/       # create, moderate, owner response
+│   │       ├── user/          # profile, avatar
+│   │       ├── venues/        # search, detail, pricing
+│   │       └── webhooks/      # Stripe webhook handler
+│   │
 │   ├── components/
-│   │   ├── booking/           # BookingWidget, checkout components
-│   │   ├── dashboard/         # KPIs, tables, charts, sidebars
-│   │   ├── map/               # VenueMap (Mapbox)
+│   │   ├── booking/           # BookingWidget
+│   │   ├── dashboard/         # KPIs, charts, tables, sidebars (admin/owner/tenant)
+│   │   ├── forms/             # VenueForm, SpaceEditClient, AddressAutocomplete
+│   │   ├── images/            # ImageUploadZone, ImageGallery, SpaceImagesTab
+│   │   ├── map/               # VenueMap (Mapbox GL), VenueMapStatic
+│   │   ├── messaging/         # MessagingPanel, MessageButton, MessagingTrigger
+│   │   ├── notifications/     # NotificationBell (slide-over panel)
+│   │   ├── profile/           # ProfileModal (slide-over panel)
+│   │   ├── reviews/           # ReviewForm, VenueReviews, AdminReviewActions, OwnerReviewActions
 │   │   ├── search/            # SearchPageClient, SearchFilters
-│   │   ├── shared/            # Header, Footer, Hero, HowItWorks...
-│   │   ├── venue/             # VenueCard, Gallery, Reviews...
+│   │   ├── shared/            # SiteHeader, SiteFooter, HeroSection, HowItWorks...
+│   │   ├── venue/             # VenueCard, VenueGallery, VenueInfo, VenueAmenities...
 │   │   └── ui/                # shadcn/ui primitives
-│   ├── lib/
-│   │   ├── auth.ts            # Auth.js configuration
-│   │   ├── auth-middleware.ts # withAuth, withAdmin, withOwner
-│   │   ├── db.ts              # Prisma singleton
-│   │   ├── api-response.ts    # Typed responses + AppError
-│   │   └── validations/       # Zod schemas
+│   │
 │   ├── services/
-│   │   ├── venue.service.ts   # Venue business logic
-│   │   ├── booking.service.ts # Availability + pricing + booking
-│   │   ├── payment.service.ts # Stripe integration
-│   │   ├── notification.service.ts
-│   │   └── email.service.ts   # Resend transactional emails
-│   ├── middleware.ts           # Route protection
+│   │   ├── availability.service.ts   # Anti-overbooking con SELECT FOR UPDATE
+│   │   ├── booking.service.ts        # Creación, confirmación, cancelación
+│   │   ├── email.service.ts          # Resend + React Email
+│   │   ├── messaging.service.ts      # Conversaciones y mensajes
+│   │   ├── notification.service.ts   # notify(event) centralizado — 25 tipos
+│   │   ├── payment.service.ts        # Stripe PaymentIntents, refunds, webhooks
+│   │   └── venue.service.ts          # Búsqueda, geo search (Haversine), CRUD
+│   │
+│   ├── emails/
+│   │   ├── layout.tsx                # Base con branding Fiestalo
+│   │   ├── welcome.tsx
+│   │   ├── booking-confirmation.tsx
+│   │   ├── booking-request.tsx
+│   │   ├── booking-cancellation.tsx
+│   │   ├── booking-reminder.tsx
+│   │   └── password-reset.tsx
+│   │
+│   ├── lib/
+│   │   ├── auth.ts                   # Auth.js config — JWT, callbacks, Google
+│   │   ├── auth-middleware.ts        # withAuth, withAdmin, withOwner
+│   │   ├── db.ts                     # Prisma client singleton
+│   │   ├── api-response.ts           # Helpers de respuesta + AppError
+│   │   └── validations/              # Schemas Zod
+│   │
+│   ├── hooks/                        # useGeocoder
+│   ├── middleware.ts                 # Protección de rutas por rol
 │   └── utils/
-│       ├── format.ts          # Currency, date, number formatters
+│       ├── format.ts
 │       ├── slugify.ts
 │       └── venue-completeness.ts
 ```
 
 ---
 
-## Flujos principales implementados
+## Decisiones técnicas relevantes
 
-### 🔐 Autenticación
-- Registro con email/contraseña (roles: TENANT / OWNER)
-- Login con credenciales o Google OAuth
-- Protección de rutas por rol via middleware
-- JWT sessions
+### Anti-overbooking
+Las reservas usan `SELECT FOR UPDATE` via `db.$transaction`. Si dos usuarios intentan el mismo slot simultáneamente, el segundo recibe un error de conflicto. La verificación ocurre siempre en servidor.
 
-### 🏢 Publicación de espacios
-- Creación y edición de anuncios
-- Gestión de imágenes
-- Geocodificación de dirección
-- Sistema de completeness scoring
-- Revisión por admin antes de publicar
+### Búsqueda geográfica
+- **Sin coordenadas**: Prisma query estándar con índices.
+- **Con coordenadas**: bounding box en Prisma para pre-filtrar + Haversine en JS para distancia exacta. Ordenación por distancia, paginación sobre el conjunto filtrado.
 
-### 🔍 Búsqueda
-- Filtros: ciudad, fecha, precio, capacidad, tipo, amenities
-- Resultados en lista + mapa sincronizado (Mapbox)
-- Marcadores interactivos con precio
-- Ordenación por relevancia, precio, valoración
+### Sistema de notificaciones
+`notificationService.notify(event)` actúa como dispatcher centralizado. Cada evento define internamente quién lo recibe. Los errores nunca bloquean el flujo principal.
 
-### 📅 Reservas
-- Comprobación de disponibilidad en tiempo real
-- Prevención de overbooking server-side
-- Cálculo dinámico de precio (tarifas estacionales)
-- Buffers entre reservas
-- Flujo: PENDING → AWAITING_PAYMENT → CONFIRMED → COMPLETED
+### Mensajería
+Conversaciones tipadas (`VENUE_INQUIRY`, `BOOKING_SUPPORT`, `GENERAL`). Una conversación por reserva, una por par usuario/venue. Unread counts denormalizados en `ConversationParticipant` para evitar queries costosas.
 
-### 💳 Pagos (Stripe)
-- PaymentIntent con Stripe Elements
-- Webhook handler verificado
-- Reembolsos
-- Recibos automáticos
+### Imágenes
+Todos los uploads van firmados desde servidor. El cliente nunca tiene acceso al API secret de Cloudinary. Parámetros firmados (folder, transformation, formats) validados por Cloudinary.
 
-### 📊 Dashboards
-- **Admin**: KPIs globales, moderación, métricas de plataforma
-- **Owner**: Ingresos, ocupación, gestión de espacios y reservas
-- **Tenant**: Reservas, favoritos, historial
+### Mapbox GL — ⚠️ nota importante
+```
+mapbox-gl está fijado en v2.15.0
+```
+La v3 eliminó el estilo `light-v11`. **No actualizar** sin cambiar el estilo del mapa. `transpilePackages: ["mapbox-gl"]` configurado en `next.config.js` para evitar errores SSR.
 
 ---
 
 ## Webhooks de Stripe en local
 
 ```bash
-# Instala Stripe CLI
+# macOS
 brew install stripe/stripe-cli/stripe
+# Otros: https://stripe.com/docs/stripe-cli
 
-# Login
 stripe login
-
-# Escucha webhooks y redirige a tu servidor
 stripe listen --forward-to localhost:3000/api/webhooks/stripe
-
-# Copia el webhook secret que te da y ponlo en STRIPE_WEBHOOK_SECRET
+# Copiar el webhook secret → STRIPE_WEBHOOK_SECRET en .env.local
 ```
+
+Eventos manejados: `payment_intent.succeeded/failed/canceled`, `charge.refunded`, `charge.dispute.created/closed`, `checkout.session.completed`
 
 ---
 
 ## Despliegue en Vercel
 
+### Base de datos recomendada
+[Neon](https://neon.tech) — PostgreSQL serverless, plan gratuito suficiente para empezar.
+
 ```bash
-# Instalar Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-
-# Variables de entorno en producción
-vercel env add DATABASE_URL
-vercel env add NEXTAUTH_SECRET
-# ... resto de variables
+# 1. Conectar repo en vercel.com → Import Project
+# 2. Añadir variables de entorno en el dashboard de Vercel
+# 3. Cambiar NEXTAUTH_URL y NEXT_PUBLIC_APP_URL a la URL de producción
+# 4. Aplicar migraciones en producción:
+npx prisma migrate deploy
 ```
 
-**Base de datos recomendada en producción**: [Neon](https://neon.tech) o [Supabase](https://supabase.com) (PostgreSQL serverless)
-
-**Redis opcional**: [Upstash](https://upstash.com) para rate limiting y caché de sesiones
+### Checklist post-deploy
+- [ ] Webhook Stripe apuntando a `https://tu-dominio.com/api/webhooks/stripe`
+- [ ] Dominio en Resend verificado (DNS puede tardar 24-48h)
+- [ ] URL de producción en Google Cloud Console (OAuth Redirect URIs)
+- [ ] URL de producción en allowlist del token Mapbox
 
 ---
 
-## Roadmap de próximas features
+## Scripts
 
-### Corto plazo
-- [ ] Formulario completo de creación/edición de espacio con subida de imágenes a Cloudinary
-- [ ] Panel de mensajería owner ↔ tenant
-- [ ] Calendario visual de disponibilidad (para propietario)
-- [ ] Sistema de reseñas completo con respuestas del propietario
-- [ ] Exportación de reservas a CSV
+```bash
+npm run dev          # Servidor de desarrollo
+npm run build        # Build de producción
+npm run lint         # ESLint
 
-### Medio plazo
-- [ ] Payouts automáticos a propietarios (Stripe Connect)
-- [ ] Sistema de cupones y descuentos
-- [ ] Multiidioma (i18n) con next-intl
-- [ ] Push notifications (web push)
-- [ ] Facturación automatizada (facturas PDF)
-- [ ] Panel financiero avanzado
+npm run db:generate  # Regenerar cliente Prisma
+npm run db:migrate   # Crear y aplicar migración
+npm run db:seed      # Cargar datos de ejemplo
+npm run db:studio    # Prisma Studio (GUI de la BD)
+npm run db:reset     # ⚠️ Borrar BD y re-seed (solo desarrollo)
+```
 
-### Largo plazo
-- [ ] App móvil React Native
-- [ ] Chat en tiempo real (WebSockets / Socket.io)
+---
+
+## Problemas conocidos
+
+| Problema | Causa | Solución |
+|----------|-------|----------|
+| Mapa no carga | mapbox-gl v3 incompatible | Mantener fijado en v2.15.0 |
+| Error 401 Cloudinary | Parámetros firmados no coinciden | Usar endpoint específico: `/sign` para venues, `/sign-avatar` para avatares |
+| Reservas no se confirman | Webhook Stripe no configurado | `stripe listen` en local o endpoint registrado en producción |
+| Emails no llegan | Dominio Resend sin verificar | Verificar DNS o usar `onboarding@resend.dev` en desarrollo |
+| Prisma Decimal | Se devuelven como objetos | Usar `Number()` o `z.coerce.number()` al consumirlos |
+| `isAvailable` en seed | Campo no existe en AvailabilityRule | Eliminado — la disponibilidad la define la existencia del registro |
+
+---
+
+## Roadmap
+
+### Pendiente para producción
+- [ ] Webhook Stripe configurado en producción
+- [ ] Dominio Resend verificado → emails funcionando
+- [ ] Recuperación de contraseña (depende de Resend)
+- [ ] Google OAuth con URL de producción
+
+### Próximas funcionalidades
+- [ ] Calendario visual propietario (`/owner/calendar`)
+- [ ] Analytics propietario (`/owner/analytics`)
+- [ ] Facturación propietario (`/owner/billing`)
+- [ ] Exportación CSV de reservas
+- [ ] Recordatorios automáticos (Vercel Cron)
+- [ ] Sitemap dinámico y páginas SEO por ciudad
+- [ ] Rate limiting (Upstash)
+
+### Futuro
+- [ ] Payouts automáticos (Stripe Connect)
+- [ ] Chat en tiempo real (Pusher/Ably)
+- [ ] App móvil (React Native)
+- [ ] Multiidioma (next-intl)
 - [ ] IA para sugerencia de precios
-- [ ] IA para clasificación automática de anuncios
-- [ ] Sistema de afiliados
-- [ ] Multi-moneda
-- [ ] Expansión internacional
-
----
-
-## Modelo de negocio
-
-- **Comisión de plataforma**: 10% sobre cada reserva (configurable)
-- **Espacios destacados**: fee mensual para aparecer en home y resultados
-- **Plan premium propietario**: features avanzadas de analítica y gestión
-- **Expansión geográfica**: modelo replicable a cualquier ciudad/país
 
 ---
 
 ## Licencia
 
-Propietario. Todos los derechos reservados.
+Propietario. Todos los derechos reservados © Fiestalo Technologies S.L.
