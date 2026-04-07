@@ -1,0 +1,819 @@
+// SpaceHub - Complete Prisma Schema
+// PostgreSQL via Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  OWNER
+  TENANT
+}
+
+enum BookingStatus {
+  PENDING
+  AWAITING_PAYMENT
+  CONFIRMED
+  CANCELLED_BY_USER
+  CANCELLED_BY_OWNER
+  COMPLETED
+  REFUNDED
+  DISPUTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum VenueStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  PAUSED
+  REJECTED
+  SUSPENDED
+}
+
+enum BookingType {
+  INSTANT
+  REQUEST
+}
+
+enum MessageStatus {
+  SENT
+  READ
+}
+
+enum NotificationType {
+  BOOKING_NEW
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  BOOKING_COMPLETED
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  REVIEW_NEW
+  MESSAGE_NEW
+  VENUE_APPROVED
+  VENUE_REJECTED
+  VENUE_SUSPENDED
+  SYSTEM
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ─────────────────────────────────────────────
+// USER & AUTH
+// ─────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  name          String?
+  image         String?
+  role          Role      @default(TENANT)
+  isActive      Boolean   @default(true)
+  isBanned      Boolean   @default(false)
+  needsOnboarding Boolean @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime? // soft delete
+
+  // Relations
+  profile              Profile?
+  accounts             Account[]
+  sessions             Session[]
+  venues               Venue[]          @relation("VenueOwner")
+  bookings             Booking[]        @relation("TenantBookings")
+  reviewsWritten       Review[]         @relation("ReviewAuthor")
+  favorites            Favorite[]
+  sentMessages         Message[]        @relation("SentMessages")
+  notifications        Notification[]
+  supportTickets       SupportTicket[]  @relation("TicketCreator")
+  verificationDocuments VerificationDocument[]
+  auditLogs            AuditLog[]       @relation("AuditUser")
+  payouts              Payout[]
+
+  @@index([email])
+  @@index([role])
+  @@index([createdAt])
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bio         String?
+  phone       String?
+  website     String?
+  avatar      String?
+  coverImage  String?
+  city        String?
+  country     String?  @default("ES")
+  language    String?  @default("es")
+  timezone    String?  @default("Europe/Madrid")
+
+  // Owner-specific
+  companyName String?
+  vatNumber   String?
+  isVerified  Boolean  @default(false)
+  verifiedAt  DateTime?
+
+  // Stats (denormalized for performance)
+  totalBookings    Int @default(0)
+  totalVenues      Int @default(0)
+  totalReviewsGiven Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// Auth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────
+// VENUE / SPACE
+// ─────────────────────────────────────────────
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?  // emoji or icon name
+  image       String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  venues Venue[]
+
+  @@index([slug])
+}
+
+model City {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  country     String   @default("ES")
+  latitude    Float
+  longitude   Float
+  isActive    Boolean  @default(true)
+  imageUrl    String?
+
+  venues Venue[]
+
+  @@index([slug])
+  @@index([country])
+}
+
+model Amenity {
+  id       String @id @default(cuid())
+  name     String @unique
+  slug     String @unique
+  icon     String?
+  category String? // "basic", "tech", "comfort", "outdoor", etc.
+
+  venueAmenities VenueAmenity[]
+
+  @@index([slug])
+}
+
+model Venue {
+  id          String      @id @default(cuid())
+  ownerId     String
+  owner       User        @relation("VenueOwner", fields: [ownerId], references: [id])
+
+  // Core fields
+  title           String
+  slug            String      @unique
+  description     String      @db.Text
+  shortDescription String?
+  status          VenueStatus @default(DRAFT)
+  bookingType     BookingType @default(INSTANT)
+
+  // Location
+  address         String
+  addressLine2    String?
+  city            String
+  cityId          String?
+  cityRef         City?       @relation(fields: [cityId], references: [id])
+  postalCode      String?
+  country         String      @default("ES")
+  latitude        Float
+  longitude       Float
+
+  // Classification
+  categoryId      String?
+  category        Category?   @relation(fields: [categoryId], references: [id])
+
+  // Specs
+  capacity        Int         @default(1)
+  minHours        Float       @default(1)
+  maxHours        Float?
+  bufferMinutes   Int         @default(0) // gap between bookings
+  pricePerHour    Decimal     @db.Decimal(10, 2)
+  cleaningFee     Decimal?    @db.Decimal(10, 2)
+  depositAmount   Decimal?    @db.Decimal(10, 2)
+
+  // Type flags
+  isIndoor        Boolean     @default(true)
+  isOutdoor       Boolean     @default(false)
+  hasParking      Boolean     @default(false)
+  isAccessible    Boolean     @default(false)
+  allowsPets      Boolean     @default(false)
+  allowsMusic     Boolean     @default(false)
+  allowsAlcohol   Boolean     @default(false)
+  allowsCatering  Boolean     @default(false)
+  allowsSmoking   Boolean     @default(false)
+
+  // Premium / admin
+  isFeatured      Boolean     @default(false)
+  isVerified      Boolean     @default(false)
+  isPremium       Boolean     @default(false)
+  featuredUntil   DateTime?
+
+  // Quality scoring
+  completenessScore Int       @default(0) // 0-100
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Cancellation policy (JSON for flexibility)
+  cancellationPolicy Json?    // { type: "flexible"|"moderate"|"strict", refundHours: 48 }
+
+  // Rules
+  houseRules      String?     @db.Text
+
+  // Stats (denormalized)
+  totalReviews    Int         @default(0)
+  averageRating   Decimal?    @db.Decimal(3, 2)
+  totalBookings   Int         @default(0)
+  viewCount       Int         @default(0)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?   // soft delete
+
+  // Relations
+  images          VenueImage[]
+  amenities       VenueAmenity[]
+  availabilityRules AvailabilityRule[]
+  blockedDates    BlockedDate[]
+  bookings        Booking[]
+  reviews         Review[]
+  favorites       Favorite[]
+  extras          VenueExtra[]
+  seasonalPrices  SeasonalPrice[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([cityId])
+  @@index([categoryId])
+  @@index([latitude, longitude])
+  @@index([isFeatured])
+  @@index([averageRating])
+  @@index([pricePerHour])
+  @@index([createdAt])
+  @@index([slug])
+}
+
+model VenueImage {
+  id        String  @id @default(cuid())
+  venueId   String
+  venue     Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  url           String
+  cloudinaryId  String?
+  alt           String?
+  isCover       Boolean @default(false)
+  sortOrder     Int     @default(0)
+  width         Int?
+  height        Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([venueId])
+  @@index([sortOrder])
+}
+
+model VenueAmenity {
+  venueId   String
+  amenityId String
+  venue     Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  amenity   Amenity @relation(fields: [amenityId], references: [id])
+
+  @@id([venueId, amenityId])
+  @@index([venueId])
+  @@index([amenityId])
+}
+
+model VenueExtra {
+  id          String  @id @default(cuid())
+  venueId     String
+  venue       Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  price       Decimal @db.Decimal(10, 2)
+  isRequired  Boolean @default(false)
+
+  bookingExtras BookingExtra[]
+
+  @@index([venueId])
+}
+
+// ─────────────────────────────────────────────
+// AVAILABILITY
+// ─────────────────────────────────────────────
+
+model AvailabilityRule {
+  id        String @id @default(cuid())
+  venueId   String
+  venue     Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  dayOfWeek Int    // 0=Sun, 1=Mon, ..., 6=Sat
+  openTime  String // "HH:MM" e.g. "09:00"
+  closeTime String // "HH:MM" e.g. "22:00"
+  isOpen    Boolean @default(true)
+
+  @@unique([venueId, dayOfWeek])
+  @@index([venueId])
+}
+
+model BlockedDate {
+  id        String   @id @default(cuid())
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  date      DateTime @db.Date
+  startTime String?  // null = full day
+  endTime   String?
+  reason    String?
+
+  createdAt DateTime @default(now())
+
+  @@index([venueId, date])   // fast blocked-date lookup per venue+day
+}
+
+model SeasonalPrice {
+  id        String   @id @default(cuid())
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  name        String   // e.g. "Summer 2025", "Weekend rate"
+  startDate   DateTime @db.Date
+  endDate     DateTime @db.Date
+  pricePerHour Decimal @db.Decimal(10, 2)
+  daysOfWeek  Int[]   // [5, 6] = Sat, Sun. Empty = all days
+
+  @@index([venueId])
+  @@index([startDate, endDate])
+}
+
+// ─────────────────────────────────────────────
+// BOOKINGS & PAYMENTS
+// ─────────────────────────────────────────────
+
+model Booking {
+  id         String        @id @default(cuid())
+  venueId    String
+  venue      Venue         @relation(fields: [venueId], references: [id])
+  tenantId   String
+  tenant     User          @relation("TenantBookings", fields: [tenantId], references: [id])
+
+  status     BookingStatus @default(PENDING)
+  bookingRef String        @unique @default(cuid()) // human-readable reference
+
+  // Timing
+  date       DateTime      @db.Date
+  startTime  String        // "HH:MM"
+  endTime    String        // "HH:MM"
+  durationHours Float
+
+  // Pricing
+  pricePerHour    Decimal   @db.Decimal(10, 2)
+  subtotal        Decimal   @db.Decimal(10, 2)
+  cleaningFee     Decimal   @db.Decimal(10, 2) @default(0)
+  platformFee     Decimal   @db.Decimal(10, 2) @default(0) // our commission
+  platformFeeRate Decimal   @db.Decimal(5, 4)  @default(0.1) // 10%
+  depositAmount   Decimal   @db.Decimal(10, 2) @default(0)
+  total           Decimal   @db.Decimal(10, 2)
+
+  // Guest info
+  guestCount      Int       @default(1)
+  specialRequests String?   @db.Text
+  internalNotes   String?   @db.Text // owner-only
+
+  // Cancellation
+  cancelledAt     DateTime?
+  cancellationReason String?
+  cancelledBy     String?   // userId
+
+  // Timestamps
+  confirmedAt     DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  payment         Payment?
+  extras          BookingExtra[]
+  review          Review?
+  messages        Message[]
+  refunds         Refund[]
+
+  @@index([venueId, date, status])       // core availability query
+  @@index([venueId, date])               // calendar view
+  @@index([tenantId, status])            // tenant dashboard
+  @@index([tenantId, date])              // tenant upcoming
+  @@index([status])
+  @@index([bookingRef])
+  @@index([createdAt])
+}
+
+model BookingExtra {
+  id        String @id @default(cuid())
+  bookingId String
+  booking   Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  extraId   String
+  extra     VenueExtra @relation(fields: [extraId], references: [id])
+
+  quantity  Int     @default(1)
+  price     Decimal @db.Decimal(10, 2)
+
+  @@index([bookingId])
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  bookingId   String        @unique
+  booking     Booking       @relation(fields: [bookingId], references: [id])
+
+  status      PaymentStatus @default(PENDING)
+  amount      Decimal       @db.Decimal(10, 2)
+  currency    String        @default("EUR")
+
+  // Stripe
+  stripePaymentIntentId String? @unique
+  stripeChargeId        String?
+  stripeCustomerId      String?
+
+  // Receipt
+  receiptUrl  String?
+  invoiceUrl  String?
+
+  // Idempotency — prevents duplicate charges on retry
+  idempotencyKey String? @unique
+
+  // Stripe Connect — destination account for future payouts
+  stripeConnectAccountId String?
+
+  // Cancellation refund policy snapshot
+  refundPolicy  String? // "flexible" | "moderate" | "strict"
+
+  paidAt      DateTime?
+  failedAt    DateTime?
+  refundedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  refunds     Refund[]
+
+  @@index([bookingId])
+  @@index([stripePaymentIntentId])
+  @@index([stripePaymentIntentId])
+  @@index([status])
+}
+
+model Refund {
+  id          String   @id @default(cuid())
+  paymentId   String
+  payment     Payment  @relation(fields: [paymentId], references: [id])
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+
+  amount      Decimal  @db.Decimal(10, 2)
+  reason      String?
+  stripeRefundId String? @unique
+  refundType     String  @default("full") // "full" | "partial" | "policy"
+
+  processedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([paymentId])
+  @@index([bookingId])
+}
+
+model Payout {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+
+  amount      Decimal  @db.Decimal(10, 2)
+  currency    String   @default("EUR")
+  status      String   @default("pending") // pending, processing, paid, failed
+  
+  stripeTransferId String? @unique
+  periodStart DateTime
+  periodEnd   DateTime
+
+  paidAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────
+// REVIEWS
+// ─────────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(cuid())
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id])
+  bookingId String   @unique
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  authorId  String
+  author    User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+
+  rating    Int      // 1-5
+  comment   String   @db.Text
+
+  // Sub-ratings
+  cleanlinessRating Int?
+  locationRating    Int?
+  valueRating       Int?
+  communicationRating Int?
+
+  isPublished Boolean @default(true)
+  ownerResponse String? @db.Text
+  ownerRespondedAt DateTime?
+
+  // Moderation
+  isFlagged   Boolean @default(false)
+  flaggedAt   DateTime?
+  flagReason  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([venueId])
+  @@index([authorId])
+  @@index([bookingId])
+  @@index([rating])
+  @@index([isPublished])
+}
+
+// ─────────────────────────────────────────────
+// FAVORITES
+// ─────────────────────────────────────────────
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, venueId])
+  @@index([userId])
+  @@index([venueId])
+}
+
+// ─────────────────────────────────────────────
+// MESSAGING
+// ─────────────────────────────────────────────
+
+model Conversation {
+  id          String    @id @default(cuid())
+  bookingId   String?   @unique
+  venueId     String
+  participantIds String[] // array of userIds
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  messages    Message[]
+
+  @@index([venueId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  bookingId      String?
+  booking        Booking?     @relation(fields: [bookingId], references: [id])
+
+  content   String      @db.Text
+  status    MessageStatus @default(SENT)
+  readAt    DateTime?
+
+  createdAt DateTime    @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([bookingId])
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+
+  // Metadata
+  meta      Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
+// PROMOTIONS & COUPONS
+// ─────────────────────────────────────────────
+
+model Coupon {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  description String?
+
+  discountType  String  // "percentage" | "fixed"
+  discountValue Decimal @db.Decimal(10, 2)
+  maxUses       Int?
+  usedCount     Int     @default(0)
+  minAmount     Decimal? @db.Decimal(10, 2)
+
+  isActive    Boolean   @default(true)
+  validFrom   DateTime?
+  validUntil  DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+}
+
+// ─────────────────────────────────────────────
+// SUPPORT & ADMIN
+// ─────────────────────────────────────────────
+
+model SupportTicket {
+  id          String         @id @default(cuid())
+  creatorId   String
+  creator     User           @relation("TicketCreator", fields: [creatorId], references: [id])
+
+  subject     String
+  description String         @db.Text
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+
+  assignedTo  String?
+  relatedBookingId String?
+  relatedVenueId   String?
+
+  resolvedAt  DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([priority])
+}
+
+model VerificationDocument {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        String   // "id_card", "passport", "business_license"
+  fileUrl     String
+  status      String   @default("pending") // pending, approved, rejected
+  reviewedAt  DateTime?
+  reviewNotes String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation("AuditUser", fields: [userId], references: [id])
+
+  action    String
+  entity    String
+  entityId  String?
+  changes   Json?
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+// Platform configuration (singleton table)
+model PlatformConfig {
+  id    String @id @default("singleton")
+  key   String @unique
+  value String @db.Text
+  description String?
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+}
