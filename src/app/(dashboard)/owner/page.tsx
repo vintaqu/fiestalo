@@ -89,6 +89,14 @@ async function getOwnerStats(ownerId: string) {
   const monthRevenue = Number(revenueResult._sum.total ?? 0);
   const lastMonthRevenue = Number(lastMonthRevenueResult._sum.total ?? 0);
 
+  // Convert Prisma Decimal fields to number so RecentBookingsTable types match
+  const recentBookingsNormalized = recentBookings.map((b) => ({
+    ...b,
+    total:      Number(b.total),
+    subtotal:   Number(b.subtotal),
+    platformFee:Number(b.platformFee),
+  }));
+
   return {
     totalVenues,
     activeVenues,
@@ -185,7 +193,7 @@ export default async function OwnerDashboard() {
             <Link href="/owner/bookings">Ver todas</Link>
           </Button>
         </div>
-        <RecentBookingsTable bookings={stats.recentBookings} role="owner" />
+        <RecentBookingsTable bookings={recentBookingsNormalized} role="owner" />
       </div>
     </div>
   );
