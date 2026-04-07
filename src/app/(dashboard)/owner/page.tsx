@@ -117,7 +117,7 @@ export default async function OwnerDashboard() {
         stats.lastMonthRevenue > 0
           ? ((stats.monthRevenue - stats.lastMonthRevenue) / stats.lastMonthRevenue) * 100
           : null,
-      icon: "euro",
+      icon: "euro" as const,
     },
     {
       label: "Reservas este mes",
@@ -127,20 +127,20 @@ export default async function OwnerDashboard() {
         stats.lastMonthBookings > 0
           ? ((stats.monthBookings - stats.lastMonthBookings) / stats.lastMonthBookings) * 100
           : null,
-      icon: "calendar",
+      icon: "calendar" as const,
     },
     {
       label: "Espacios activos",
       value: stats.activeVenues,
       total: stats.totalVenues,
       type: "number" as const,
-      icon: "building",
+      icon: "building" as const,
     },
     {
       label: "Reservas totales",
       value: stats.totalBookings,
       type: "number" as const,
-      icon: "check",
+      icon: "check" as const,
     },
   ];
 
