@@ -77,13 +77,13 @@ export default async function VenueDetailPage({ params }: PageProps) {
   });
 
   const mapVenue = {
-    id: venue.id as string,
-    title: venue.title as string,
-    slug: venue.slug as string,
-    latitude: venue.latitude as number,
-    longitude: venue.longitude as number,
-    pricePerHour: venue.pricePerHour as number,
-    images: (venue.images as Array<{ url: string }>).slice(0, 1),
+    id:           String(venue.id),
+    title:        String(venue.title),
+    slug:         String(venue.slug),
+    latitude:     Number(venue.latitude),
+    longitude:    Number(venue.longitude),
+    pricePerHour: Number(venue.pricePerHour),
+    images:       (venue.images as Array<{ url: string }>).slice(0, 1),
   };
 
   return (
@@ -109,7 +109,7 @@ export default async function VenueDetailPage({ params }: PageProps) {
               <VenueAvailability
                 venueId={venue.id as string}
                 availabilityRules={venue.availabilityRules as any}
-                minHours={venue.minHours as number}
+                minHours={Number(venue.minHours)}
               />
 
               {/* Map */}
