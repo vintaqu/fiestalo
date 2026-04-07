@@ -9,6 +9,7 @@ import { OwnerCTA } from "@/components/shared/owner-cta";
 import { SiteFooter } from "@/components/shared/site-footer";
 import { SiteHeader } from "@/components/shared/site-header";
 import { VenueCardSkeleton } from "@/components/venue/venue-card-skeleton";
+import { normalizeVenue } from "@/utils/normalize";
 
 async function getFeaturedVenues() {
   return db.venue.findMany({
@@ -43,7 +44,7 @@ async function getCategories() {
 }
 
 export default async function HomePage() {
-  const [featuredVenues, categories] = await Promise.all([
+  const [featuredVenuesRaw, categories] = await Promise.all([
     getFeaturedVenues(),
     getCategories(),
   ]);
@@ -88,7 +89,7 @@ export default async function HomePage() {
             </a>
           </div>
           <Suspense fallback={<VenueGridSkeleton />}>
-            <FeaturedVenues venues={featuredVenues} />
+            <FeaturedVenues venues={featuredVenuesRaw.map(normalizeVenue)} />
           </Suspense>
         </div>
       </section>
