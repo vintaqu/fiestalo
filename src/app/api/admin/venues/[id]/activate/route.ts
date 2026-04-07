@@ -4,12 +4,9 @@ import { db } from "@/lib/db";
 
 export const POST = withAdmin(async (_req: NextRequest, { params }) => {
   const venueId = params!.id as string;
-  const newStatus = "activate" === "suspend" ? "SUSPENDED" : "ACTIVE";
-
   await db.venue.update({
     where: { id: venueId },
-    data:  { status: newStatus },
+    data:  { status: "ACTIVE" },
   });
-
-  return NextResponse.json({ data: { status: newStatus } });
+  return NextResponse.json({ data: { status: "ACTIVE" } });
 });
