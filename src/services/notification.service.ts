@@ -15,6 +15,7 @@
  */
 
 import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 import type { NotificationType } from "@prisma/client";
 
 // ── Primitive create — internal use only ─────────────────────────
@@ -36,7 +37,7 @@ async function createOne(input: NotificationInput) {
       title:  input.title,
       body:   input.body,
       link:   input.link,
-      meta:   input.meta ?? {},
+      meta: (input.meta ?? {}) as Prisma.InputJsonValue,
     },
   });
 }
