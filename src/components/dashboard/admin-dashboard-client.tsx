@@ -123,19 +123,19 @@ export function AdminDashboardClient({ filterOptions }: { filterOptions: FilterO
 
         {/* Alerts */}
         <div className="flex items-center gap-2 flex-wrap">
-          {kpis?.pendingVenues?.value > 0 && (
+          {(kpis?.pendingVenues?.value ?? 0) > 0 && (
             <Link href="/admin/venues?status=PENDING_REVIEW">
               <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1.5 rounded-xl text-xs font-medium hover:bg-amber-100 transition-colors cursor-pointer">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                {kpis.pendingVenues.value} espacios pendientes
+                {kpis?.pendingVenues?.value ?? 0} espacios pendientes
               </div>
             </Link>
           )}
-          {kpis?.pendingReviews?.value > 0 && (
+          {(kpis?.pendingReviews?.value ?? 0) > 0 && (
             <Link href="/admin/reviews?status=pending">
               <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 rounded-xl text-xs font-medium hover:bg-blue-100 transition-colors cursor-pointer">
                 <Star className="w-3 h-3" />
-                {kpis.pendingReviews.value} reseñas por moderar
+                {kpis?.pendingReviews?.value ?? 0} reseñas por moderar
               </div>
             </Link>
           )}
