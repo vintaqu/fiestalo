@@ -138,7 +138,7 @@ export class BookingService {
           venue: {
             select: { title: true, owner: { select: { email: true, name: true } } },
           },
-          tenant: { select: { email: true, name: true } },
+          tenant: { select: { id: true, email: true, name: true } },
         },
       });
 
@@ -322,7 +322,7 @@ export class BookingService {
     db.booking.findUnique({
       where: { id: bookingId },
       include: {
-        tenant: { select: { email: true, name: true } },
+        tenant: { select: { id: true, email: true, name: true } },
         venue:  { select: { title: true } },
       },
     }).then((b) => {
