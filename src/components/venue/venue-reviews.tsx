@@ -18,7 +18,6 @@ interface Review {
   locationRating?: number | null;
   valueRating?: number | null;
   communicationRating?: number | null;
-  ownerResponse?: string | null;
   author: {
     name?: string | null;
     image?: string | null;
