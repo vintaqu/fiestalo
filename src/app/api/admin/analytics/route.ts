@@ -337,7 +337,6 @@ export async function GET(req: NextRequest) {
     },
     filters: { ownerId, city, categoryId },
   });
-}
   } catch (err) {
     console.error("[analytics]", err);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
