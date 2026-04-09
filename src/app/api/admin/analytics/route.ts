@@ -68,6 +68,7 @@ function getRange(sp: URLSearchParams): { start: Date; end: Date; prevStart: Dat
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
+  try {
   const session = await guard();
   if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -166,34 +167,39 @@ export async function GET(req: NextRequest) {
     }),
     // Top owners computed after Promise.all via separate query — placeholder
     Promise.resolve([]),
-    // Monthly series — last 12 months always
-    Promise.all(
-      eachMonthOfInterval({
-        start: startOfMonth(subMonths(new Date(), 11)),
-        end:   endOfMonth(new Date()),
-      }).map(async (month) => {
+    // Monthly series — single bulk query, aggregated in JS
+    (async () => {
+      const seriesStart = startOfMonth(subMonths(new Date(), 11));
+      const seriesEnd   = endOfMonth(new Date());
+      const seriesFilter: any = { confirmedAt: { gte: seriesStart, lte: seriesEnd } };
+      if (bWhere.venueId) seriesFilter.venueId = bWhere.venueId;
+
+      const [allB, allU] = await Promise.all([
+        db.booking.findMany({
+          where:  seriesFilter,
+          select: { confirmedAt: true, total: true, platformFee: true, status: true },
+        }),
+        db.user.findMany({
+          where:  { createdAt: { gte: seriesStart, lte: seriesEnd }, deletedAt: null },
+          select: { createdAt: true },
+        }),
+      ]);
+
+      return eachMonthOfInterval({ start: seriesStart, end: seriesEnd }).map((month) => {
         const s = startOfMonth(month);
         const e = endOfMonth(month);
-        const monthBWhere = {
-          ...bWhere,
-          confirmedAt: { gte: s, lte: e },
-        };
-        const [rev, cnt, newU, cancelled] = await Promise.all([
-          db.booking.aggregate({ where: monthBWhere, _sum: { total: true, platformFee: true } }),
-          db.booking.count({ where: monthBWhere }),
-          db.user.count({ where: { createdAt: { gte: s, lte: e }, deletedAt: null } }),
-          db.booking.count({ where: { ...monthBWhere, status: { in: ["CANCELLED_BY_USER", "CANCELLED_BY_OWNER"] } } }),
-        ]);
+        const mb = allB.filter((b) => b.confirmedAt && b.confirmedAt >= s && b.confirmedAt <= e);
+        const confirmed = mb.filter((b) => b.status === "CONFIRMED" || b.status === "COMPLETED");
         return {
           month:      format(month, "MMM yy", { locale: es }),
-          revenue:    Number(rev._sum.total      ?? 0),
-          commission: Number(rev._sum.platformFee ?? 0),
-          bookings:   cnt,
-          newUsers:   newU,
-          cancelled,
+          revenue:    Math.round(confirmed.reduce((a, b) => a + Number(b.total ?? 0), 0) * 100) / 100,
+          commission: Math.round(confirmed.reduce((a, b) => a + Number(b.platformFee ?? 0), 0) * 100) / 100,
+          bookings:   confirmed.length,
+          newUsers:   allU.filter((u) => u.createdAt >= s && u.createdAt <= e).length,
+          cancelled:  mb.filter((b) => b.status === "CANCELLED_BY_USER" || b.status === "CANCELLED_BY_OWNER").length,
         };
-      })
-    ),
+      });
+    })(),
     // Status distribution
     db.booking.groupBy({
       by:      ["status"],
@@ -331,4 +337,9 @@ export async function GET(req: NextRequest) {
     },
     filters: { ownerId, city, categoryId },
   });
+}
+  } catch (err) {
+    console.error("[analytics]", err);
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
 }
