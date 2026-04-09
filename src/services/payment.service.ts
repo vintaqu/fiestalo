@@ -21,11 +21,11 @@ import crypto from "crypto";
 
 // ── Stripe client (singleton) ─────────────────────────────────────────────────
 
+// apiVersion omitted — uses the version bundled with the installed stripe package
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-03-25.dahlia",
   typescript: true,
   maxNetworkRetries: 3,
-});
+} as any);
 
 // Platform fee rate read from DB or default to 10%
 const DEFAULT_PLATFORM_FEE_RATE = 0.1;
