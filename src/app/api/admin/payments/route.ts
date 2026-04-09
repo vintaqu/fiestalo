@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/admin/payments — paginated payment list for admin dashboard
 export async function GET(req: NextRequest) {
   const session = await auth();

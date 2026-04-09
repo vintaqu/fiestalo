@@ -6,6 +6,8 @@ import { slugify } from "@/utils/slugify";
 import { calculateCompleteness } from "@/utils/venue-completeness";
 import { ZodError } from "zod";
 
+export const dynamic = "force-dynamic";
+
 async function generateUniqueSlug(title: string): Promise<string> {
   let slug = slugify(title);
   let suffix = 0;

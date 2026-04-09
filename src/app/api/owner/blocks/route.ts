@@ -3,6 +3,8 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { availabilityService } from "@/services/availability.service";
 
+export const dynamic = "force-dynamic";
+
 const createSchema = z.object({
   venueId:   z.string().min(1),
   date:      z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato YYYY-MM-DD"),

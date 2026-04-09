@@ -3,6 +3,8 @@ import { ok, handleApiError } from "@/lib/api-response";
 import { withAuth } from "@/lib/auth-middleware";
 import { paymentService } from "@/services/payment.service";
 
+export const dynamic = "force-dynamic";
+
 // POST /api/checkout/[bookingId]
 // Creates or retrieves a PaymentIntent for this booking.
 // Price is re-verified server-side against current venue prices.

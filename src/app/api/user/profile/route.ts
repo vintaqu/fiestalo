@@ -3,6 +3,8 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 const profileUpdateSchema = z.object({
   name:    z.string().min(2).max(80).optional(),
   bio:     z.string().max(500).optional(),

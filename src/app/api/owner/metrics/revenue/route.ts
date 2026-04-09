@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { subMonths, startOfMonth, endOfMonth, format } from "date-fns";
 import { es } from "date-fns/locale";
 
+export const dynamic = "force-dynamic";
+
 export const GET = withOwner(async (req, { userId }) => {
   try {
     const now = new Date();

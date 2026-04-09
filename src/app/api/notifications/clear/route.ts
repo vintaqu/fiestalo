@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // DELETE /api/notifications/clear — delete all notifications for the user
 export async function DELETE(_req: NextRequest) {
   const session = await auth();

@@ -5,6 +5,8 @@ import { venueUpdateSchema } from "@/lib/validations";
 import { calculateCompleteness } from "@/utils/venue-completeness";
 import { ZodError } from "zod";
 
+export const dynamic = "force-dynamic";
+
 async function assertOwnership(venueId: string, userId: string, userRole: string) {
   const venue = await db.venue.findUnique({
     where: { id: venueId, deletedAt: null },

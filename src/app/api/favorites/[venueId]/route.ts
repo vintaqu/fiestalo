@@ -2,6 +2,8 @@ import { ok, handleApiError } from "@/lib/api-response";
 import { withAuth } from "@/lib/auth-middleware";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // Toggle favorite
 export const POST = withAuth(async (req, { params, userId }) => {
   try {

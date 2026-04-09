@@ -3,6 +3,8 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { messagingService } from "@/services/messaging.service";
 
+export const dynamic = "force-dynamic";
+
 const sendSchema = z.object({
   content: z.string().min(1).max(5000),
 });

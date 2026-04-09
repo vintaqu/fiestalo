@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { messagingService } from "@/services/messaging.service";
 
+export const dynamic = "force-dynamic";
+
 // DELETE /api/conversations/[id]/messages/[messageId]
 export async function DELETE(
   _req: NextRequest,

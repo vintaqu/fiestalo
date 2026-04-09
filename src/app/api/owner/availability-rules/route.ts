@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { availabilityService } from "@/services/availability.service";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 const ruleSchema = z.object({
   dayOfWeek: z.number().int().min(0).max(6),
   isOpen:    z.boolean(),

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 const ownerResponseSchema = z.object({
   action:   z.literal("respond"),
   response: z.string().min(10).max(1000),

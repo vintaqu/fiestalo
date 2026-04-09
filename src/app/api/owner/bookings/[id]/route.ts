@@ -3,6 +3,8 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 const actionSchema = z.object({
   action: z.enum(["accept", "reject", "cancel"]),
   reason: z.string().max(500).optional(),

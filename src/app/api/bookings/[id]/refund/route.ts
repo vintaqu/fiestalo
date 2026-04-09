@@ -3,6 +3,8 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { paymentService } from "@/services/payment.service";
 
+export const dynamic = "force-dynamic";
+
 const refundSchema = z.object({
   reason:         z.string().max(500).optional(),
   overrideAmount: z.number().positive().optional(), // admin-only
