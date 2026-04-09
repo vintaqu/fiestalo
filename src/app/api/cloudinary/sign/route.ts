@@ -1,8 +1,8 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import crypto from "crypto";
 
-export const dynamic = "force-dynamic";
 
 // Cloudinary upload restrictions enforced server-side via signed upload
 const ALLOWED_FORMATS = ["jpg", "jpeg", "png", "webp", "heic", "heif"];

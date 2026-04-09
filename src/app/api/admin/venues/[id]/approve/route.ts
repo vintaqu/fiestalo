@@ -1,9 +1,9 @@
+export const dynamic = "force-dynamic";
 import { ok, handleApiError } from "@/lib/api-response";
 import { withAdmin } from "@/lib/auth-middleware";
 import { db } from "@/lib/db";
 import { notificationService } from "@/services/notification.service";
 
-export const dynamic = "force-dynamic";
 
 export const POST = withAdmin(async (req, { params }) => {
   try {

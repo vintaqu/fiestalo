@@ -1,10 +1,10 @@
+export const dynamic = "force-dynamic";
 import { ok, handleApiError } from "@/lib/api-response";
 import { withAdmin } from "@/lib/auth-middleware";
 import { db } from "@/lib/db";
 import { subMonths, startOfMonth, endOfMonth, format } from "date-fns";
 import { es } from "date-fns/locale";
 
-export const dynamic = "force-dynamic";
 
 export const GET = withAdmin(async () => {
   try {

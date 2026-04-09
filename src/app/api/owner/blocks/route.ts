@@ -1,9 +1,9 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { availabilityService } from "@/services/availability.service";
 
-export const dynamic = "force-dynamic";
 
 const createSchema = z.object({
   venueId:   z.string().min(1),

@@ -1,10 +1,10 @@
+export const dynamic = "force-dynamic";
 import { NextRequest } from "next/server";
 import { ok, created, badRequest, handleApiError } from "@/lib/api-response";
 import { withAuth } from "@/lib/auth-middleware";
 import { reviewCreateSchema } from "@/lib/validations";
 import { db } from "@/lib/db";
 
-export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {

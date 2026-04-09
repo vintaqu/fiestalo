@@ -1,9 +1,9 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { paymentService } from "@/services/payment.service";
 
-export const dynamic = "force-dynamic";
 
 const refundSchema = z.object({
   reason:         z.string().max(500).optional(),

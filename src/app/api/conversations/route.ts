@@ -1,10 +1,10 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { messagingService } from "@/services/messaging.service";
 import { db } from "@/lib/db";
 
-export const dynamic = "force-dynamic";
 
 const createSchema = z.object({
   type:        z.enum(["VENUE_INQUIRY", "BOOKING_SUPPORT", "GENERAL"]).default("VENUE_INQUIRY"),

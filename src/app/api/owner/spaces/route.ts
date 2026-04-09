@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -6,7 +7,6 @@ import { slugify } from "@/utils/slugify";
 import { calculateCompleteness } from "@/utils/venue-completeness";
 import { ZodError } from "zod";
 
-export const dynamic = "force-dynamic";
 
 async function generateUniqueSlug(title: string): Promise<string> {
   let slug = slugify(title);
