@@ -26,7 +26,7 @@ interface NotificationInput {
   title:  string;
   body:   string;
   link?:  string;
-  meta?:  Record<string, unknown>;
+  meta?:  Prisma.InputJsonValue;
 }
 
 async function createOne(input: NotificationInput) {
@@ -44,7 +44,12 @@ async function createOne(input: NotificationInput) {
 
 async function createMany(inputs: NotificationInput[]) {
   if (inputs.length === 0) return;
-  return db.notification.createMany({ data: inputs });
+  return db.notification.createMany({
+    data: inputs.map((i) => ({
+      ...i,
+      meta: (i.meta ?? {}) as Prisma.InputJsonValue,
+    })),
+  });
 }
 
 // ── Event payload types ───────────────────────────────────────────
@@ -517,7 +522,7 @@ export class NotificationService {
     title:  string;
     body:   string;
     link?:  string;
-    meta?:  Record<string, unknown>;
+    meta?:  Prisma.InputJsonValue;
   }) {
     return createOne(input);
   }
