@@ -11,6 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://fiestalo.es'),
   title: {
     default: "Fiestalo – Salas de fiestas para celebrar",
     template: "%s | Fiestalo",
