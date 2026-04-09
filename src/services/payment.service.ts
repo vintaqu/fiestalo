@@ -11,6 +11,7 @@
 
 import Stripe from "stripe";
 import { db } from "@/lib/db";
+import { notificationService } from "@/services/notification.service";
 import {
   NotFoundError,
   ValidationError,
@@ -21,7 +22,7 @@ import crypto from "crypto";
 // ── Stripe client (singleton) ─────────────────────────────────────────────────
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2026-03-25.dahlia",
   typescript: true,
   maxNetworkRetries: 3,
 });
