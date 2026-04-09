@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { ok, created, handleApiError } from "@/lib/api-response";
 import { withAuth } from "@/lib/auth-middleware";
 import { bookingCreateSchema } from "@/lib/validations";
