@@ -6,7 +6,7 @@ import { formatPrice, formatShortDate } from "@/utils/format";
 
 // On success page load, verify payment with Stripe and confirm booking if needed
 // This is a fallback in case the webhook hasn't arrived yet
-async function verifyAndConfirm(bookingId: string) {
+async function verifyAndConfirm(bookingId: string, urlPaymentIntentId?: string) {
   try {
     const booking = await db.booking.findUnique({
       where:   { id: bookingId },
@@ -16,9 +16,16 @@ async function verifyAndConfirm(bookingId: string) {
     if (!booking || !booking.payment?.stripePaymentIntentId) return;
 
     // Already confirmed — nothing to do
-    if (booking.status === "CONFIRMED") return;
+    if (booking.status === "CONFIRMED" || booking.status === "COMPLETED") return;
 
-    // Check with Stripe directly
+    // Security: if Stripe passed a payment_intent in the URL, verify it matches
+    // what we have stored for this booking — prevents visiting another user's success URL
+    if (urlPaymentIntentId && urlPaymentIntentId !== booking.payment.stripePaymentIntentId) {
+      console.error("[success page] payment_intent mismatch — possible fraud attempt");
+      return;
+    }
+
+    // Verify with Stripe server-side using SECRET key (never trust the client)
     const Stripe = (await import("stripe")).default;
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
       typescript: true,
@@ -28,8 +35,8 @@ async function verifyAndConfirm(bookingId: string) {
       booking.payment.stripePaymentIntentId
     );
 
-    if (pi.status === "succeeded" && booking.status !== "CONFIRMED") {
-      // Webhook missed — confirm manually
+    // Only confirm if Stripe says money was actually collected
+    if (pi.status === "succeeded") {
       const { bookingService } = await import("@/services/booking.service");
       await bookingService.confirmPayment(bookingId, pi.id);
     }
@@ -41,11 +48,14 @@ async function verifyAndConfirm(bookingId: string) {
 
 export default async function CheckoutSuccessPage({
   params,
+  searchParams,
 }: {
-  params: { bookingId: string };
+  params:       { bookingId: string };
+  searchParams: { payment_intent?: string; payment_intent_client_secret?: string };
 }) {
-  // Try to confirm via direct Stripe check (webhook fallback)
-  await verifyAndConfirm(params.bookingId);
+  // Stripe adds payment_intent to the return_url as a query param
+  // We pass it to verifyAndConfirm for an extra security check
+  await verifyAndConfirm(params.bookingId, searchParams.payment_intent);
 
   const booking = await db.booking.findUnique({
     where:   { id: params.bookingId },
