@@ -82,8 +82,15 @@ export function VenueCard({
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-100 to-brand-200">
-                <span className="text-4xl">🏢</span>
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-50 to-brand-100 relative overflow-hidden">
+                <Image
+                  src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&q=60"
+                  alt={venue.title}
+                  fill
+                  className="object-cover opacity-60"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                />
+                <span className="text-4xl relative z-10">🎉</span>
               </div>
             )}
 

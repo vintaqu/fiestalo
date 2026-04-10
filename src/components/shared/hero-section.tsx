@@ -85,7 +85,7 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-6">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-6 mt-16 sm:mt-0">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             <span className="text-white/90 text-sm font-medium">
               +500 salas de fiestas disponibles en España
