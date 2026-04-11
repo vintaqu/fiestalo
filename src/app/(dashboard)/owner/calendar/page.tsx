@@ -6,7 +6,7 @@ import { CalendarDays } from "lucide-react";
 
 async function getOwnerVenues(ownerId: string) {
   return db.venue.findMany({
-    where:   { ownerId, deletedAt: null, status: { not: "DELETED" } },
+    where:   { ownerId, deletedAt: null },
     select:  { id: true, title: true },
     orderBy: { createdAt: "asc" },
   });
