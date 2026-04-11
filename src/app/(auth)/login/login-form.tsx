@@ -144,9 +144,7 @@ export function LoginForm() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Contraseña</Label>
-                <Link href="/forgot-password" className="text-xs text-primary hover:underline">
-                  ¿La olvidaste?
-                </Link>
+<span className="text-xs text-muted-foreground">¿La olvidaste? Contacta con soporte</span>
               </div>
               <div className="relative">
                 <Input
